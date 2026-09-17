@@ -1,0 +1,13 @@
+allowBuilds:
+  esbuild: true
+  workerd: true
+overrides:
+  vite@*: npm:@voidzero-dev/vite-plus-core@0.3.2
+  vitest@*: 4.1.11
+minimumReleaseAgeExclude:
+  - "@cloudflare/vite-plugin@1.54.11"
+  - "@cloudflare/workers-types@5.20260917.1"
+  - miniflare@5.20260916.0-alpha
+  - wrangler@4.133.0
+  - "@voidzero-dev/vite-plus-core@0.3.2"
+  - vite-plus@0.3.2

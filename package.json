@@ -1,0 +1,49 @@
+{
+  "name": "paste",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A simple pastebin on Cloudflare Workers",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vue-tsc --build && vp build",
+    "preview": "vp preview",
+    "deploy": "pnpm build && wrangler deploy",
+    "check": "vp check",
+    "typecheck": "vue-tsc --build",
+    "typegen": "wrangler types",
+    "db:migrate": "wrangler d1 migrations apply paste-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply paste-db --remote",
+    "db:create": "wrangler d1 create paste-db",
+    "r2:create": "wrangler r2 bucket create paste-content",
+    "test": "vp test",
+    "test:watch": "vp test watch"
+  },
+  "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@lucide/vue": "^1.46.0",
+    "dompurify": "^3.4.15",
+    "highlight.js": "^11.12.0",
+    "hono": "^4.13.8",
+    "marked": "^18.0.13",
+    "marked-highlight": "^2.2.4",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.11",
+    "@cloudflare/vitest-plugin": "^1.1.10",
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "@tsconfig/node22": "^22.0.2",
+    "@types/node": "^22.15.3",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "@vue/tsconfig": "^0.9.1",
+    "typescript": "~5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.2",
+    "vite-plus": "0.3.2",
+    "vitest": "4.1.11",
+    "vue-tsc": "^3.3.11",
+    "wrangler": "^4.133.0"
+  }
+}

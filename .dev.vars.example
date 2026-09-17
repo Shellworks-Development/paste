@@ -1,0 +1,4 @@
+# Copy to `.dev.vars` for local development, and set a real one with
+#   npx wrangler secret put ADMIN_TOKEN
+# The admin token is only used to mint API tokens via POST /api/tokens.
+ADMIN_TOKEN=dev-admin-token-change-me

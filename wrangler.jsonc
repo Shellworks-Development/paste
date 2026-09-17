@@ -1,0 +1,78 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "paste",
+  "main": "./server/index.ts",
+  "compatibility_date": "2026-09-17",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/raw/*", "/dl/*", "/p/*/raw", "/p/*/download"],
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "paste-db",
+      "database_id": "187285fc-382f-4e06-8501-922678bec31c",
+      "migrations_dir": "migrations",
+    },
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "PASTES",
+      "bucket_name": "paste-content",
+    },
+  ],
+
+  "ratelimits": [
+    {
+      "name": "RL_ANON",
+      "namespace_id": "1001",
+      "simple": { "limit": 20, "period": 60 },
+    },
+    {
+      "name": "RL_AUTH",
+      "namespace_id": "1002",
+      "simple": { "limit": 300, "period": 60 },
+    },
+    {
+      "name": "RL_READ",
+      "namespace_id": "1003",
+      "simple": { "limit": 600, "period": 60 },
+    },
+    {
+      "name": "RL_KEYS",
+      "namespace_id": "1004",
+      "simple": { "limit": 10, "period": 60 },
+    },
+  ],
+
+  "triggers": {
+    "crons": ["*/15 * * * *"],
+  },
+
+  "vars": {
+    "MAX_ANON_BYTES": "1048576",
+    "MAX_AUTH_BYTES": "5242880",
+    "DEFAULT_EXPIRY_SECONDS": "604800",
+    "MAX_EXPIRY_SECONDS": "31536000",
+    "TOKEN_COOLDOWN_SECONDS": "300",
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+
+  "workers_dev": false,
+  "preview_urls": false,
+
+  "routes": [
+    {
+      "pattern": "paste.shellworks.dev",
+      "custom_domain": true,
+    },
+  ],
+}
