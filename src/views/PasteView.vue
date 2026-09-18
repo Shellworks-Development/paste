@@ -28,7 +28,7 @@ import type { Paste, PasteMeta } from "@shared/types";
 import { ApiError, api } from "@/lib/api";
 import { decryptText } from "@/lib/crypto";
 import { formatBytes, formatDateTime, timeAgo, expiryText } from "@/lib/format";
-import { renderCode, renderMarkdown } from "@/lib/markdown";
+import { renderCode, renderHtml, renderMarkdown } from "@/lib/markdown";
 
 const route = useRoute();
 const router = useRouter();
@@ -48,6 +48,7 @@ const unlockError = ref<string | null>(null);
 const keyInput = ref("");
 
 const isEncrypted = computed(() => paste.value?.visibility === "encrypted");
+const isHtml = computed(() => paste.value?.language === "html");
 const locked = computed(() => isEncrypted.value && plaintext.value === null);
 const createdAt = computed(() => (paste.value ? formatDateTime(paste.value.created_at) : ""));
 const shareUrl = computed(() => {
@@ -72,9 +73,9 @@ async function render(): Promise<void> {
   rendering.value = true;
   try {
     const options = { unsafe: paste.value?.unsafe ?? false };
-    html.value = renderAsMarkdown.value
-      ? await renderMarkdown(source, options)
-      : await renderCode(source, paste.value?.language ?? "plaintext", options);
+    if (isHtml.value) html.value = await renderHtml(source, options);
+    else if (renderAsMarkdown.value) html.value = await renderMarkdown(source, options);
+    else html.value = await renderCode(source, paste.value?.language ?? "plaintext", options);
   } catch {
     html.value = `<pre class="hljs">${escapeHtml(source)}</pre>`;
   } finally {
@@ -299,7 +300,10 @@ async function remove(): Promise<void> {
           </div>
 
           <div class="toolbar-actions">
-            <label v-if="tab === 'rendered' && paste.language !== 'markdown'" class="toggle">
+            <label
+              v-if="tab === 'rendered' && !isHtml && paste.language !== 'markdown'"
+              class="toggle"
+            >
               <input v-model="renderAsMarkdown" type="checkbox" />
               <span>markdown</span>
             </label>

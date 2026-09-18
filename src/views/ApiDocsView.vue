@@ -105,7 +105,11 @@ open "${base}/p/<id>?key=<key>"`,
       <p class="muted small">Or upload a file as multipart form data:</p>
       <pre class="doc-code"><code>{{ samples.createFile }}</code></pre>
       <ul class="plain-list">
-        <li><code>language</code> — any highlight.js id, default <code>markdown</code></li>
+        <li>
+          <code>language</code> — any highlight.js id, default <code>markdown</code>;
+          <code>html</code>
+          renders live
+        </li>
         <li>
           <code>visibility</code> — <code>unlisted</code> (default), <code>public</code> (listed in
           recent), or <code>encrypted</code> (key required)

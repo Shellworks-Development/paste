@@ -5,6 +5,8 @@ default, and raw source is always one request away.
 
 - **Markdown by default** — pastes render with sanitized markdown and syntax-highlighted
   fences; switch to raw whenever you need the source.
+- **Live HTML** — pastes with the HTML language render as sanitized HTML, so CSS-only games and
+  demos work (pair with unsafe mode to keep their custom CSS).
 - **Lots of languages** — ~190 highlight.js languages, loaded lazily so the editor stays light.
 - **Size tiers** — 1 MiB anonymously, 5 MiB with an API key.
 - **API keys on demand** — generate one from the account page; issuance is rate limited and

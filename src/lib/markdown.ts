@@ -107,6 +107,15 @@ export async function renderMarkdown(source: string, options: RenderOptions = {}
   return sanitize(html, options.unsafe ?? false);
 }
 
+/**
+ * Sanitizes a raw HTML paste so it renders live (instead of being shown as
+ * highlighted source). A leading `<style>` or a full `<!doctype html>` document
+ * is preserved; DOMPurify's `FORCE_BODY` keeps style blocks out of `<head>`.
+ */
+export async function renderHtml(source: string, options: RenderOptions = {}): Promise<string> {
+  return sanitize(source, options.unsafe ?? false);
+}
+
 /** Renders a plain code paste as a highlighted `<pre>` block. */
 export async function renderCode(
   source: string,

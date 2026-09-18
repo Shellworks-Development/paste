@@ -680,6 +680,17 @@ li code {
   flex-wrap: wrap;
 }
 
+.html-hint {
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--warning) 6%, var(--bg-subtle));
+}
+
+.html-hint svg {
+  color: var(--warning);
+}
+
 .editor-footer .primary {
   margin-left: auto;
   padding: 0.5rem 1.2rem;

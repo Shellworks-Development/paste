@@ -47,6 +47,7 @@ const dragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const isEncrypted = computed(() => visibility.value === "encrypted");
+const isHtml = computed(() => language.value === "html");
 const maxBytes = computed(() => (getToken() ? LIMITS.authBytes : LIMITS.anonBytes));
 const plaintextBytes = computed(() => new TextEncoder().encode(content.value).byteLength);
 const byteSize = computed(() =>
@@ -224,6 +225,12 @@ function onKeydown(event: KeyboardEvent): void {
         >
       </label>
     </div>
+
+    <p v-if="isHtml && !unsafeMode" class="hint html-hint">
+      <TriangleAlert :size="13" aria-hidden="true" />
+      HTML pastes render live. Turn on <strong>Unsafe mode</strong> to keep their
+      <code>&lt;style&gt;</code> CSS.
+    </p>
 
     <div v-if="unsafeMode" class="unsafe-panel">
       <div class="unsafe-heading">
