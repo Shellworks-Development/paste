@@ -82,6 +82,25 @@ describe("create and read", () => {
     expect(paste.views).toBeGreaterThanOrEqual(0);
   });
 
+  it("round-trips the opt-in unsafe flag", async () => {
+    const enabled = await readJson<PasteMeta>(
+      await createPaste({ content: "<style>.a{}</style>", unsafe: true }),
+    );
+    expect(enabled.unsafe).toBe(true);
+
+    const viaQuery = await readJson<PasteMeta>(
+      await api("/api/pastes?unsafe=true", {
+        method: "POST",
+        body: "plain",
+        headers: { "Content-Type": "text/plain" },
+      }),
+    );
+    expect(viaQuery.unsafe).toBe(true);
+
+    const disabled = await readJson<PasteMeta>(await createPaste({ content: "plain" }));
+    expect(disabled.unsafe).toBe(false);
+  });
+
   it("accepts plain text bodies with query options", async () => {
     const response = await api("/api/pastes?language=rust&title=main", {
       method: "POST",

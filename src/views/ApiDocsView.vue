@@ -116,6 +116,10 @@ open "${base}/p/<id>?key=<key>"`,
           <code>never</code>, or seconds
         </li>
         <li><code>burn_after_read</code> — <code>true</code> deletes the paste on first read</li>
+        <li>
+          <code>unsafe</code> — <code>true</code> opts in to scoped custom CSS (still sanitized; no
+          scripts)
+        </li>
       </ul>
     </section>
 

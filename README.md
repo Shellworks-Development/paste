@@ -11,6 +11,8 @@ default, and raw source is always one request away.
   cooled down per IP.
 - **End-to-end encryption** — opt in per paste; the body is encrypted in your browser and the
   viewer prompts for the key.
+- **Unsafe mode** — opt in per paste to allow custom CSS (scoped to the preview, still sanitized)
+  for demos, games and visual experiments.
 - **Expiry and burn-after-read** — from 10 minutes to a year, or never, with scheduled cleanup.
 - **Public or unlisted** — unlisted by default, public pastes show up in a recent list.
 
@@ -70,7 +72,8 @@ curl -X POST https://paste.shellworks.dev/api/tokens -d '{"name": "laptop"}'
 
 Options: `language` (any highlight.js id), `visibility` (`unlisted` | `public` | `encrypted`),
 `expires_in` (`10m`, `1h`, `1d`, `1w`, `2w`, `1m`, `6m`, `1y`, `never`, or seconds),
-`burn_after_read`, `title`. Send `Authorization: Bearer psk_…` to use a key.
+`burn_after_read`, `unsafe` (scoped custom CSS), `title`. Send `Authorization: Bearer psk_…` to
+use a key.
 
 ## Encryption
 

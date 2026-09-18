@@ -101,6 +101,7 @@ export const api = {
         language: input.language,
         visibility: input.visibility,
         burn_after_read: input.burn_after_read,
+        unsafe: input.unsafe,
         expires_in: input.expires_in,
       },
     });

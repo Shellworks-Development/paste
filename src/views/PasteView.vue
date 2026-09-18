@@ -17,6 +17,7 @@ import {
   Lock,
   Paintbrush,
   SearchX,
+  ShieldAlert,
   Trash,
   TriangleAlert,
   Unlock,
@@ -70,9 +71,10 @@ async function render(): Promise<void> {
   if (source === null) return;
   rendering.value = true;
   try {
+    const options = { unsafe: paste.value?.unsafe ?? false };
     html.value = renderAsMarkdown.value
-      ? await renderMarkdown(source)
-      : await renderCode(source, paste.value?.language ?? "plaintext");
+      ? await renderMarkdown(source, options)
+      : await renderCode(source, paste.value?.language ?? "plaintext", options);
   } catch {
     html.value = `<pre class="hljs">${escapeHtml(source)}</pre>`;
   } finally {
@@ -231,6 +233,9 @@ async function remove(): Promise<void> {
             <span v-if="paste.burn_after_read" class="badge danger">
               <Flame :size="11" aria-hidden="true" />burn after read
             </span>
+            <span v-if="paste.unsafe" class="badge danger">
+              <ShieldAlert :size="11" aria-hidden="true" />unsafe mode
+            </span>
           </div>
         </div>
       </header>
@@ -238,6 +243,12 @@ async function remove(): Promise<void> {
       <p v-if="paste.burn_after_read && !locked" class="notice">
         <Flame :size="14" aria-hidden="true" />
         This paste was configured to self-destruct. Reading the raw body consumes it.
+      </p>
+
+      <p v-if="paste.unsafe && !locked" class="notice warning">
+        <ShieldAlert :size="14" aria-hidden="true" />
+        Unsafe mode: this paste can include custom CSS, which may alter the appearance of the page.
+        CSS is scoped to the preview and JavaScript stays blocked.
       </p>
 
       <section v-if="locked" class="card locked-state">
@@ -334,7 +345,12 @@ async function remove(): Promise<void> {
             <LoaderCircle :size="14" class="spin" aria-hidden="true" />rendering…
           </p>
           <!-- eslint-disable-next-line vue/no-v-html -->
-          <article v-show="!rendering" class="prose" v-html="html"></article>
+          <article
+            v-show="!rendering"
+            class="prose"
+            :class="{ 'paste-unsafe': paste.unsafe }"
+            v-html="html"
+          ></article>
         </section>
 
         <section v-else class="card raw-card">

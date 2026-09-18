@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   Lock,
   RefreshCw,
+  ShieldAlert,
   Tag,
   TriangleAlert,
   Type,
@@ -35,6 +36,7 @@ const language = ref(DEFAULT_LANGUAGE);
 const expiresIn = ref("1w");
 const visibility = ref<Visibility>("unlisted");
 const burnAfterRead = ref(false);
+const unsafeMode = ref(false);
 const encryptionKey = ref("");
 const includeKeyInLink = ref(true);
 
@@ -88,6 +90,7 @@ async function submit(): Promise<void> {
       language: language.value,
       visibility: visibility.value,
       burn_after_read: burnAfterRead.value,
+      unsafe: unsafeMode.value,
       expires_in: expiresIn.value,
     });
     emit("created", meta, key && includeKeyInLink.value ? key : null);
@@ -213,6 +216,27 @@ function onKeydown(event: KeyboardEvent): void {
         <input v-model="burnAfterRead" type="checkbox" />
         <span class="field-label"><Flame :size="13" aria-hidden="true" />Burn after read</span>
       </label>
+
+      <label class="field checkbox">
+        <input v-model="unsafeMode" type="checkbox" />
+        <span class="field-label"
+          ><ShieldAlert :size="13" aria-hidden="true" />Unsafe mode (custom CSS)</span
+        >
+      </label>
+    </div>
+
+    <div v-if="unsafeMode" class="unsafe-panel">
+      <div class="unsafe-heading">
+        <TriangleAlert :size="14" aria-hidden="true" />
+        <span>
+          Unsafe mode allows custom CSS. It can change the appearance of the paste page, so only use
+          it for trusted, creative content such as CSS demos or games.
+        </span>
+      </div>
+      <p class="muted small">
+        JavaScript, event handlers and <code>javascript:</code> URLs stay blocked, network CSS loads
+        are disabled, and CSS is scoped to the preview so it cannot restyle the rest of the site.
+      </p>
     </div>
 
     <div v-if="isEncrypted" class="encryption-panel">

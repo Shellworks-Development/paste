@@ -356,6 +356,19 @@ button.ghost.danger {
   font-size: 0.88rem;
 }
 
+.notice.warning {
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.notice.warning svg {
+  color: var(--warning);
+  margin-top: 0.15em;
+}
+
 .error {
   color: var(--danger);
   font-size: 0.88rem;
@@ -681,6 +694,31 @@ li code {
   background: color-mix(in srgb, var(--accent) 5%, var(--bg-subtle));
 }
 
+.unsafe-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.9rem 0.75rem;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--warning) 8%, var(--bg-subtle));
+}
+
+.unsafe-heading {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.unsafe-heading svg {
+  color: var(--warning);
+  margin-top: 0.15em;
+}
+
+.unsafe-panel p {
+  margin: 0;
+}
+
 .encryption-heading {
   display: inline-flex;
   align-items: center;
@@ -848,6 +886,17 @@ li code {
 
 .prose {
   overflow-wrap: anywhere;
+}
+
+/*
+ * Unsafe-mode pastes may include custom CSS. `contain` and `isolation` keep
+ * that CSS from escaping the preview bounds or stacking above the site chrome.
+ */
+.prose.paste-unsafe {
+  position: relative;
+  isolation: isolate;
+  contain: layout paint style;
+  z-index: 0;
 }
 
 .prose > :first-child {

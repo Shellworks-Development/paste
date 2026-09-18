@@ -8,6 +8,7 @@ export interface PasteRow {
   r2_key: string;
   visibility: Visibility;
   burn_after_read: number;
+  unsafe: number;
   views: number;
   created_at: number;
   expires_at: number | null;
@@ -32,6 +33,7 @@ export interface InsertPasteInput {
   r2Key: string;
   visibility: Visibility;
   burnAfterRead: boolean;
+  unsafe: boolean;
   createdAt: number;
   expiresAt: number | null;
   ownerId: string | null;
@@ -41,8 +43,8 @@ export async function insertPaste(db: D1Database, input: InsertPasteInput): Prom
   await db
     .prepare(
       `INSERT INTO pastes
-        (id, title, language, size, r2_key, visibility, burn_after_read, views, created_at, expires_at, owner_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+        (id, title, language, size, r2_key, visibility, burn_after_read, unsafe, views, created_at, expires_at, owner_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
     )
     .bind(
       input.id,
@@ -52,6 +54,7 @@ export async function insertPaste(db: D1Database, input: InsertPasteInput): Prom
       input.r2Key,
       input.visibility,
       input.burnAfterRead ? 1 : 0,
+      input.unsafe ? 1 : 0,
       input.createdAt,
       input.expiresAt,
       input.ownerId,

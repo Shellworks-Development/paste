@@ -7,6 +7,8 @@ export interface PasteMeta {
   size: number;
   visibility: Visibility;
   burn_after_read: boolean;
+  /** Opt-in mode that allows sanitized, scoped custom CSS when rendering. */
+  unsafe: boolean;
   views: number;
   created_at: number;
   expires_at: number | null;
@@ -35,6 +37,8 @@ export interface CreatePasteInput {
   language?: string;
   visibility?: Visibility;
   burn_after_read?: boolean;
+  /** Opt in to scoped custom CSS when the paste is rendered. Disabled by default. */
+  unsafe?: boolean;
   /** Seconds until the paste expires, a preset like `1w`, or `null`/`never` for no expiry. */
   expires_in?: number | string | null;
 }

@@ -1,5 +1,6 @@
 {
   "include": ["test/**/*", "server/**/*", "shared/**/*", "worker-configuration.d.ts"],
+  "exclude": ["test/client"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",

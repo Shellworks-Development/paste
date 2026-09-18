@@ -26,6 +26,7 @@ interface ParsedCreate {
   language?: unknown;
   visibility?: unknown;
   burn_after_read?: unknown;
+  unsafe?: unknown;
   expires_in?: unknown;
 }
 
@@ -45,6 +46,7 @@ export function toMeta(row: PasteRow, origin: string, viewerId: string | null): 
     size: row.size,
     visibility: row.visibility,
     burn_after_read: row.burn_after_read === 1,
+    unsafe: row.unsafe === 1,
     views: row.views,
     created_at: row.created_at,
     expires_at: row.expires_at,
@@ -89,6 +91,7 @@ async function parseCreate(request: Request, url: URL): Promise<ParsedCreate | R
       language: body.language,
       visibility: body.visibility,
       burn_after_read: body.burn_after_read ?? body.burn,
+      unsafe: body.unsafe ?? body.unsafe_mode,
       expires_in: body.expires_in ?? body.expires ?? body.expiry,
     };
   }
@@ -121,6 +124,7 @@ async function parseCreate(request: Request, url: URL): Promise<ParsedCreate | R
       language: form.get("language") ?? form.get("lang"),
       visibility: form.get("visibility"),
       burn_after_read: form.get("burn_after_read") ?? form.get("burn"),
+      unsafe: form.get("unsafe") ?? form.get("unsafe_mode"),
       expires_in: form.get("expires_in") ?? form.get("expires"),
     };
   }
@@ -132,6 +136,7 @@ async function parseCreate(request: Request, url: URL): Promise<ParsedCreate | R
     language: url.searchParams.get("language") ?? url.searchParams.get("lang"),
     visibility: url.searchParams.get("visibility"),
     burn_after_read: url.searchParams.has("burn") ? "true" : undefined,
+    unsafe: url.searchParams.get("unsafe") ?? url.searchParams.get("unsafe_mode"),
     expires_in: url.searchParams.get("expires_in") ?? url.searchParams.get("expires"),
   };
 }
@@ -219,6 +224,7 @@ pastes.post("/", async (c) => {
   const visibility = parseVisibility(parsed.visibility);
   const title = parseTitle(parsed.title);
   const burnAfterRead = parseBoolean(parsed.burn_after_read);
+  const unsafe = parseBoolean(parsed.unsafe);
 
   await c.env.PASTES.put(r2Key, parsed.content, {
     httpMetadata: { contentType: "text/plain; charset=utf-8" },
@@ -234,6 +240,7 @@ pastes.post("/", async (c) => {
       r2Key,
       visibility,
       burnAfterRead,
+      unsafe,
       createdAt,
       expiresAt: expiry.expiresAt,
       ownerId: token ? token.id : null,
