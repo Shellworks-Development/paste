@@ -839,6 +839,21 @@ li code {
   padding: 1.25rem 1.4rem;
 }
 
+.rendered.frame-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.unsafe-frame {
+  display: block;
+  width: 100%;
+  height: min(78vh, 900px);
+  min-height: 420px;
+  border: none;
+  background: #fff;
+  color-scheme: light;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 1.5rem;

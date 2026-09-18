@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { renderHtml } from "@/lib/markdown";
+import { FRAME_CSP, renderHtml, renderHtmlFrame } from "@/lib/markdown";
 
 describe("html rendering", () => {
   it("renders a fragment with scoped custom css in unsafe mode", async () => {
@@ -58,5 +58,40 @@ describe("html rendering", () => {
     expect(html).not.toContain("<script");
     expect(html).not.toContain("onclick");
     expect(html).toContain("ok");
+  });
+});
+
+describe("unsafe html frame", () => {
+  it("wraps the paste in a document with a restrictive CSP and untouched css", async () => {
+    const doc = await renderHtmlFrame(
+      "<style>.game { color: hotpink; background: url(https://example.com/a.png); }</style><div class='game'>hi</div>",
+    );
+
+    expect(doc).toContain(`content="${FRAME_CSP}"`);
+    expect(doc).toContain("default-src 'none'");
+    expect(doc).toContain(".game { color: hotpink; background: url(https://example.com/a.png); }");
+    expect(doc).not.toContain(".paste-unsafe");
+    expect(doc).toContain('<div class="game">hi</div>');
+    expect(doc).toContain("<body>");
+  });
+
+  it("leaves body/:root selectors and css nesting intact", async () => {
+    const css = ":root { --c: red; } body { margin: 0; } .a { .b { color: var(--c); } }";
+    const doc = await renderHtmlFrame(
+      `<style>${css}</style><div class="a"><div class="b">x</div></div>`,
+    );
+
+    expect(doc).toContain(css);
+    expect(doc).not.toContain(".paste-unsafe");
+  });
+
+  it("removes scripts and nested frames", async () => {
+    const doc = await renderHtmlFrame(
+      '<script>alert(1)</script><iframe src="https://x.test"></iframe><p>ok</p>',
+    );
+
+    expect(doc).not.toContain("<script");
+    expect(doc).not.toContain("<iframe");
+    expect(doc).toContain("<p>ok</p>");
   });
 });

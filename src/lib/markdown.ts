@@ -15,6 +15,21 @@ export interface RenderOptions {
 let highlighter: HighlightJs | null = null;
 let markedInstance: Marked | null = null;
 let hooksInstalled = false;
+let scopeStyles = false;
+
+/**
+ * Content Security Policy for the isolated frame used by unsafe HTML pastes.
+ * Scripts, frames and network CSS (`@import`, external stylesheets, `fetch`) are
+ * blocked; inline CSS plus https/data images, fonts and media still load so
+ * CSS-only games render.
+ */
+export const FRAME_CSP = [
+  "default-src 'none'",
+  "style-src 'unsafe-inline'",
+  "img-src data: https:",
+  "font-src data: https:",
+  "media-src data: https:",
+].join("; ");
 
 /**
  * highlight.js ships ~190 languages. It is a sizeable dependency, so load it
@@ -37,8 +52,10 @@ function installHooks(): void {
       node.setAttribute("target", "_blank");
       node.setAttribute("rel", "noopener noreferrer nofollow");
     }
-    // Inline CSS only ever reaches this hook in unsafe mode (normal mode forbids
-    // the `style` attribute outright), so it is safe to sanitize it here.
+    // Inline CSS is only rewritten when it will be injected into this document
+    // (unsafe markdown/code pastes). Unsafe HTML renders inside an isolated
+    // frame, so there its CSS is left intact and constrained by the frame CSP.
+    if (!scopeStyles) return;
     const inline = node.getAttribute("style");
     if (inline !== null) {
       const cleaned = sanitizeDeclarations(inline);
@@ -48,7 +65,7 @@ function installHooks(): void {
   });
 
   DOMPurify.addHook("afterSanitizeElements", (node) => {
-    if (node instanceof Element && node.tagName === "STYLE") {
+    if (scopeStyles && node instanceof Element && node.tagName === "STYLE") {
       node.textContent = scopeCss(node.textContent ?? "", `.${UNSAFE_SCOPE_CLASS}`);
     }
   });
@@ -77,7 +94,7 @@ async function getMarked(): Promise<Marked> {
   return marked;
 }
 
-function sanitize(html: string, unsafe = false): string {
+function sanitize(html: string, unsafe = false, scope = unsafe): string {
   installHooks();
   const config: Parameters<typeof DOMPurify.sanitize>[1] = {
     USE_PROFILES: { html: true },
@@ -85,8 +102,8 @@ function sanitize(html: string, unsafe = false): string {
   };
 
   if (unsafe) {
-    // Allow `<style>` blocks (scoped by the hook above) but keep script
-    // execution vectors forbidden even in unsafe mode.
+    // Allow `<style>` blocks but keep script execution vectors forbidden even in
+    // unsafe mode.
     config.ADD_TAGS = ["style"];
     config.FORBID_TAGS = ["script", "iframe", "object", "embed", "link", "base", "meta", "form"];
     config.FORBID_ATTR = ["srcdoc"];
@@ -97,7 +114,12 @@ function sanitize(html: string, unsafe = false): string {
     config.FORBID_ATTR = ["style"];
   }
 
-  return DOMPurify.sanitize(html, config);
+  scopeStyles = scope;
+  try {
+    return DOMPurify.sanitize(html, config);
+  } finally {
+    scopeStyles = false;
+  }
 }
 
 /** Renders Markdown to sanitized HTML with highlighted code fences. */
@@ -114,6 +136,23 @@ export async function renderMarkdown(source: string, options: RenderOptions = {}
  */
 export async function renderHtml(source: string, options: RenderOptions = {}): Promise<string> {
   return sanitize(source, options.unsafe ?? false);
+}
+
+/**
+ * Renders an unsafe HTML paste as a self-contained document for a sandboxed
+ * `<iframe srcdoc>`. The frame gets a real `html`/`body` document (so `:root`,
+ * `body` layout and `100vh` all behave normally), CSS is *not* selector-rewritten
+ * (the frame itself is the isolation boundary), and `FRAME_CSP` blocks scripts
+ * and network CSS.
+ */
+export async function renderHtmlFrame(source: string): Promise<string> {
+  const body = sanitize(source, true, false);
+  const head =
+    `<meta charset="utf-8">` +
+    `<meta http-equiv="Content-Security-Policy" content="${FRAME_CSP}">` +
+    `<meta name="referrer" content="no-referrer">` +
+    `<base target="_blank">`;
+  return `<!doctype html><html lang="en"><head>${head}</head><body>${body}</body></html>`;
 }
 
 /** Renders a plain code paste as a highlighted `<pre>` block. */

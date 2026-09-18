@@ -28,7 +28,7 @@ import type { Paste, PasteMeta } from "@shared/types";
 import { ApiError, api } from "@/lib/api";
 import { decryptText } from "@/lib/crypto";
 import { formatBytes, formatDateTime, timeAgo, expiryText } from "@/lib/format";
-import { renderCode, renderHtml, renderMarkdown } from "@/lib/markdown";
+import { renderCode, renderHtml, renderHtmlFrame, renderMarkdown } from "@/lib/markdown";
 
 const route = useRoute();
 const router = useRouter();
@@ -49,6 +49,7 @@ const keyInput = ref("");
 
 const isEncrypted = computed(() => paste.value?.visibility === "encrypted");
 const isHtml = computed(() => paste.value?.language === "html");
+const useFrame = computed(() => isHtml.value && (paste.value?.unsafe ?? false));
 const locked = computed(() => isEncrypted.value && plaintext.value === null);
 const createdAt = computed(() => (paste.value ? formatDateTime(paste.value.created_at) : ""));
 const shareUrl = computed(() => {
@@ -73,7 +74,8 @@ async function render(): Promise<void> {
   rendering.value = true;
   try {
     const options = { unsafe: paste.value?.unsafe ?? false };
-    if (isHtml.value) html.value = await renderHtml(source, options);
+    if (useFrame.value) html.value = await renderHtmlFrame(source);
+    else if (isHtml.value) html.value = await renderHtml(source, options);
     else if (renderAsMarkdown.value) html.value = await renderMarkdown(source, options);
     else html.value = await renderCode(source, paste.value?.language ?? "plaintext", options);
   } catch {
@@ -88,7 +90,7 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>]/g, (char) => entities[char] ?? char);
 }
 
-watch([plaintext, renderAsMarkdown], () => {
+watch([plaintext, renderAsMarkdown, useFrame], () => {
   void render();
 });
 
@@ -248,8 +250,8 @@ async function remove(): Promise<void> {
 
       <p v-if="paste.unsafe && !locked" class="notice warning">
         <ShieldAlert :size="14" aria-hidden="true" />
-        Unsafe mode: this paste can include custom CSS, which may alter the appearance of the page.
-        CSS is scoped to the preview and JavaScript stays blocked.
+        Unsafe mode: this paste can include custom CSS, which may alter the appearance of the paste.
+        It is isolated from the rest of the site and JavaScript stays blocked.
       </p>
 
       <section v-if="locked" class="card locked-state">
@@ -344,12 +346,26 @@ async function remove(): Promise<void> {
           </div>
         </div>
 
-        <section v-if="tab === 'rendered'" class="card rendered">
+        <section
+          v-if="tab === 'rendered'"
+          class="card rendered"
+          :class="{ 'frame-card': useFrame }"
+        >
           <p v-if="rendering" class="muted">
             <LoaderCircle :size="14" class="spin" aria-hidden="true" />rendering…
           </p>
+          <iframe
+            v-if="useFrame"
+            v-show="!rendering"
+            class="unsafe-frame"
+            :srcdoc="html"
+            sandbox="allow-popups allow-popups-to-escape-sandbox"
+            referrerpolicy="no-referrer"
+            title="Paste preview (isolated)"
+          ></iframe>
           <!-- eslint-disable-next-line vue/no-v-html -->
           <article
+            v-else
             v-show="!rendering"
             class="prose"
             :class="{ 'paste-unsafe': paste.unsafe }"
