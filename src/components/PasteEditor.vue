@@ -242,7 +242,8 @@ function onKeydown(event: KeyboardEvent): void {
       </div>
       <p class="muted small">
         JavaScript, event handlers and <code>javascript:</code> URLs stay blocked, network CSS loads
-        are disabled, and CSS is scoped to the preview so it cannot restyle the rest of the site.
+        are disabled, and CSS is isolated to the preview so it cannot restyle the rest of the site.
+        Embedded media frames stay sandboxed.
       </p>
     </div>
 

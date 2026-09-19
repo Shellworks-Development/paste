@@ -16,6 +16,7 @@ let highlighter: HighlightJs | null = null;
 let markedInstance: Marked | null = null;
 let hooksInstalled = false;
 let scopeStyles = false;
+let frameMode = false;
 
 /**
  * Content Security Policy for the isolated frame used by unsafe HTML pastes.
@@ -29,6 +30,7 @@ export const FRAME_CSP = [
   "img-src data: https:",
   "font-src data: https:",
   "media-src data: https:",
+  "frame-src https:",
 ].join("; ");
 
 /**
@@ -49,8 +51,17 @@ function installHooks(): void {
   DOMPurify.addHook("afterSanitizeAttributes", (node) => {
     if (!(node instanceof Element)) return;
     if (node.tagName === "A") {
-      node.setAttribute("target", "_blank");
+      // Inside the isolated frame keep authored targets (e.g. `target="music"`,
+      // which loads a track into a hidden media frame); elsewhere force new tabs.
+      if (!frameMode) node.setAttribute("target", "_blank");
       node.setAttribute("rel", "noopener noreferrer nofollow");
+    }
+    // Inside the isolated frame, iframes are allowed so media targets work, but
+    // they are force-sandboxed (the parent sandbox is inherited anyway) and
+    // can never opt back into scripts or a same-origin context.
+    if (frameMode && node.tagName === "IFRAME") {
+      node.setAttribute("sandbox", "");
+      node.removeAttribute("allow");
     }
     // Inline CSS is only rewritten when it will be injected into this document
     // (unsafe markdown/code pastes). Unsafe HTML renders inside an isolated
@@ -94,7 +105,7 @@ async function getMarked(): Promise<Marked> {
   return marked;
 }
 
-function sanitize(html: string, unsafe = false, scope = unsafe): string {
+function sanitize(html: string, unsafe = false, scope = unsafe, frames = false): string {
   installHooks();
   const config: Parameters<typeof DOMPurify.sanitize>[1] = {
     USE_PROFILES: { html: true },
@@ -103,9 +114,30 @@ function sanitize(html: string, unsafe = false, scope = unsafe): string {
 
   if (unsafe) {
     // Allow `<style>` blocks but keep script execution vectors forbidden even in
-    // unsafe mode.
-    config.ADD_TAGS = ["style"];
-    config.FORBID_TAGS = ["script", "iframe", "object", "embed", "link", "base", "meta", "form"];
+    // unsafe mode. Iframes are only allowed inside the isolated frame, where the
+    // parent sandbox (no allow-scripts / no allow-same-origin) is inherited.
+    config.ADD_TAGS = frames ? ["style", "iframe"] : ["style"];
+    if (frames) {
+      config.ADD_ATTR = [
+        "target",
+        "rel",
+        "name",
+        "allow",
+        "allowfullscreen",
+        "loading",
+        "referrerpolicy",
+      ];
+    }
+    config.FORBID_TAGS = [
+      "script",
+      ...(frames ? [] : ["iframe"]),
+      "object",
+      "embed",
+      "link",
+      "base",
+      "meta",
+      "form",
+    ];
     config.FORBID_ATTR = ["srcdoc"];
     // Without this a leading `<style>` is hoisted into `<head>` and dropped.
     config.FORCE_BODY = true;
@@ -115,10 +147,12 @@ function sanitize(html: string, unsafe = false, scope = unsafe): string {
   }
 
   scopeStyles = scope;
+  frameMode = frames;
   try {
     return DOMPurify.sanitize(html, config);
   } finally {
     scopeStyles = false;
+    frameMode = false;
   }
 }
 
@@ -146,7 +180,7 @@ export async function renderHtml(source: string, options: RenderOptions = {}): P
  * and network CSS.
  */
 export async function renderHtmlFrame(source: string): Promise<string> {
-  const body = sanitize(source, true, false);
+  const body = sanitize(source, true, false, true);
   const head =
     `<meta charset="utf-8">` +
     `<meta http-equiv="Content-Security-Policy" content="${FRAME_CSP}">` +

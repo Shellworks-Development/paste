@@ -85,13 +85,33 @@ describe("unsafe html frame", () => {
     expect(doc).not.toContain(".paste-unsafe");
   });
 
-  it("removes scripts and nested frames", async () => {
+  it("removes scripts but keeps sandboxed media iframes", async () => {
     const doc = await renderHtmlFrame(
-      '<script>alert(1)</script><iframe src="https://x.test"></iframe><p>ok</p>',
+      '<script>alert(1)</script><iframe name="music" src="https://x.test/song.mp3"></iframe><p>ok</p>',
     );
 
     expect(doc).not.toContain("<script");
-    expect(doc).not.toContain("<iframe");
+    expect(doc).toContain('name="music"');
+    expect(doc).toContain('src="https://x.test/song.mp3"');
+    expect(doc).toContain('sandbox=""');
     expect(doc).toContain("<p>ok</p>");
+  });
+
+  it("preserves named link targets so media frames can be used", async () => {
+    const doc = await renderHtmlFrame('<a href="https://x.test/song.mp3" target="music">play</a>');
+    expect(doc).toContain('target="music"');
+    expect(doc).toContain('rel="noopener noreferrer nofollow"');
+  });
+
+  it("never gives an iframe a scripted or same-origin context", async () => {
+    const doc = await renderHtmlFrame(
+      '<iframe src="https://x.test" sandbox="allow-scripts allow-same-origin" allow="fullscreen"></iframe>' +
+        '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
+    );
+
+    expect(doc).not.toContain("allow-scripts");
+    expect(doc).not.toContain("allow-same-origin");
+    expect(doc).not.toContain("srcdoc");
+    expect(doc).toContain('sandbox=""');
   });
 });
