@@ -57,11 +57,12 @@ function installHooks(): void {
       node.setAttribute("rel", "noopener noreferrer nofollow");
     }
     // Inside the isolated frame, iframes are allowed so media targets work, but
-    // they are force-sandboxed (the parent sandbox is inherited anyway) and
-    // can never opt back into scripts or a same-origin context.
+    // they are force-sandboxed (the parent sandbox is inherited anyway) and can
+    // only ever be granted autoplay - never scripts, same-origin or other
+    // powerful permissions.
     if (frameMode && node.tagName === "IFRAME") {
       node.setAttribute("sandbox", "");
-      node.removeAttribute("allow");
+      node.setAttribute("allow", "autoplay");
     }
     // Inline CSS is only rewritten when it will be injected into this document
     // (unsafe markdown/code pastes). Unsafe HTML renders inside an isolated

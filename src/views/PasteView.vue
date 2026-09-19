@@ -360,6 +360,7 @@ async function remove(): Promise<void> {
             class="unsafe-frame"
             :srcdoc="html"
             sandbox="allow-popups allow-popups-to-escape-sandbox"
+            allow="autoplay"
             referrerpolicy="no-referrer"
             title="Paste preview (isolated)"
           ></iframe>

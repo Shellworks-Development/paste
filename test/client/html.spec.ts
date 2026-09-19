@@ -94,6 +94,7 @@ describe("unsafe html frame", () => {
     expect(doc).toContain('name="music"');
     expect(doc).toContain('src="https://x.test/song.mp3"');
     expect(doc).toContain('sandbox=""');
+    expect(doc).toContain('allow="autoplay"');
     expect(doc).toContain("<p>ok</p>");
   });
 
