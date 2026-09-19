@@ -104,6 +104,14 @@ describe("unsafe html frame", () => {
     expect(doc).toContain("<p>ok</p>");
   });
 
+  it("keeps contenteditable so in-game text can be edited", async () => {
+    const doc = await renderHtmlFrame(
+      '<p contenteditable="plaintext-only">edit me</p><textarea required></textarea>',
+    );
+    expect(doc).toContain('contenteditable="plaintext-only"');
+    expect(doc).toContain("<textarea");
+  });
+
   it("preserves named link targets so media frames can be used", async () => {
     const doc = await renderHtmlFrame('<a href="https://x.test/song.mp3" target="music">play</a>');
     expect(doc).toContain('target="music"');

@@ -178,17 +178,15 @@ function sanitize(html: string, unsafe = false, scope = unsafe, frames = false):
     // unsafe mode. Iframes are only allowed inside the isolated frame, where the
     // parent sandbox (no allow-scripts / no allow-same-origin) is inherited.
     config.ADD_TAGS = frames ? ["style", "iframe"] : ["style"];
-    if (frames) {
-      config.ADD_ATTR = [
-        "target",
-        "rel",
-        "name",
-        "allow",
-        "allowfullscreen",
-        "loading",
-        "referrerpolicy",
-      ];
-    }
+    // `contenteditable` is what lets CSS-only "site builders" edit text in place;
+    // it is harmless on its own. Frame-only attributes enable sandboxed media.
+    config.ADD_ATTR = [
+      "target",
+      "rel",
+      "contenteditable",
+      "spellcheck",
+      ...(frames ? ["name", "allow", "allowfullscreen", "loading", "referrerpolicy"] : []),
+    ];
     config.FORBID_TAGS = [
       "script",
       ...(frames ? [] : ["iframe"]),
