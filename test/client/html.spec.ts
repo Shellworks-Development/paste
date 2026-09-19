@@ -67,12 +67,17 @@ describe("unsafe html frame", () => {
       "<style>.game { color: hotpink; background: url(https://example.com/a.png); }</style><div class='game'>hi</div>",
     );
 
-    expect(doc).toContain(`content="${FRAME_CSP}"`);
+    expect(doc).toContain(FRAME_CSP);
     expect(doc).toContain("default-src 'none'");
     expect(doc).toContain(".game { color: hotpink; background: url(https://example.com/a.png); }");
     expect(doc).not.toContain(".paste-unsafe");
     expect(doc).toContain('<div class="game">hi</div>');
     expect(doc).toContain("<body>");
+
+    // The only executable script is the host one, locked to the CSP nonce.
+    const nonce = /script-src 'nonce-([0-9a-f]+)'/.exec(doc)?.[1];
+    expect(nonce).toBeTruthy();
+    expect(doc).toContain(`<script nonce="${nonce}">`);
   });
 
   it("leaves body/:root selectors and css nesting intact", async () => {
@@ -90,7 +95,8 @@ describe("unsafe html frame", () => {
       '<script>alert(1)</script><iframe name="music" src="https://x.test/song.mp3"></iframe><p>ok</p>',
     );
 
-    expect(doc).not.toContain("<script");
+    expect(doc).not.toContain("alert(1)");
+    expect(doc).not.toContain("<script>alert");
     expect(doc).toContain('name="music"');
     expect(doc).toContain('src="https://x.test/song.mp3"');
     expect(doc).toContain('sandbox=""');

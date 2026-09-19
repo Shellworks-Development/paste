@@ -251,7 +251,7 @@ async function remove(): Promise<void> {
       <p v-if="paste.unsafe && !locked" class="notice warning">
         <ShieldAlert :size="14" aria-hidden="true" />
         Unsafe mode: this paste can include custom CSS, which may alter the appearance of the paste.
-        It is isolated from the rest of the site and JavaScript stays blocked.
+        It is isolated from the rest of the site and pasted JavaScript stays blocked.
       </p>
 
       <section v-if="locked" class="card locked-state">
@@ -359,7 +359,7 @@ async function remove(): Promise<void> {
             v-show="!rendering"
             class="unsafe-frame"
             :srcdoc="html"
-            sandbox="allow-popups allow-popups-to-escape-sandbox"
+            sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts"
             allow="autoplay"
             referrerpolicy="no-referrer"
             title="Paste preview (isolated)"

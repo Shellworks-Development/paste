@@ -34,6 +34,66 @@ export const FRAME_CSP = [
 ].join("; ");
 
 /**
+ * Tiny host-authored script injected into the isolated frame. It is locked to a
+ * per-render nonce via CSP, so pasted scripts (already stripped by DOMPurify)
+ * can never execute. Its only job is to start playback from a user gesture,
+ * because CSS alone cannot trigger audio: clicking START GAME / play / Winamp
+ * either plays the first `<audio>` element or loads the first track into the
+ * named media `<iframe>`.
+ */
+const FRAME_AUDIO_SCRIPT = `(function () {
+  var started = false;
+  function findFrame(name) {
+    var frames = document.querySelectorAll("iframe");
+    for (var i = 0; i < frames.length; i += 1) {
+      if (frames[i].getAttribute("name") === name) return frames[i];
+    }
+    return null;
+  }
+  function start() {
+    if (started) return;
+    var audio = document.querySelector("audio");
+    if (audio) {
+      started = true;
+      var result = audio.play();
+      if (result && typeof result.catch === "function") result.catch(function () {});
+      return;
+    }
+    var links = document.querySelectorAll("a[href]");
+    for (var i = 0; i < links.length; i += 1) {
+      var href = links[i].getAttribute("href") || "";
+      if (!/\\.(mp3|ogg|wav|m4a|aac|flac)([?#].*)?$/i.test(href)) continue;
+      var target = links[i].getAttribute("target");
+      if (!target || target.charAt(0) === "_") continue;
+      var frame = findFrame(target);
+      if (frame) {
+        started = true;
+        frame.setAttribute("src", links[i].href);
+        return;
+      }
+    }
+  }
+  document.addEventListener(
+    "click",
+    function (event) {
+      var node = event.target;
+      if (node && node.closest) node = node.closest("label,button,a,input,[role=button]");
+      var text = node ? (node.textContent || "") + " " + (node.value || "") : "";
+      if (/start|play|resume|winamp/i.test(text)) start();
+    },
+    true,
+  );
+})();`;
+
+function randomNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let nonce = "";
+  for (const byte of bytes) nonce += byte.toString(16).padStart(2, "0");
+  return nonce;
+}
+
+/**
  * highlight.js ships ~190 languages. It is a sizeable dependency, so load it
  * lazily the first time a paste is rendered rather than on initial page load.
  */
@@ -182,12 +242,15 @@ export async function renderHtml(source: string, options: RenderOptions = {}): P
  */
 export async function renderHtmlFrame(source: string): Promise<string> {
   const body = sanitize(source, true, false, true);
+  const nonce = randomNonce();
+  const csp = `${FRAME_CSP}; script-src 'nonce-${nonce}'`;
   const head =
     `<meta charset="utf-8">` +
-    `<meta http-equiv="Content-Security-Policy" content="${FRAME_CSP}">` +
+    `<meta http-equiv="Content-Security-Policy" content="${csp}">` +
     `<meta name="referrer" content="no-referrer">` +
     `<base target="_blank">`;
-  return `<!doctype html><html lang="en"><head>${head}</head><body>${body}</body></html>`;
+  const script = `<script nonce="${nonce}">${FRAME_AUDIO_SCRIPT}</script>`;
+  return `<!doctype html><html lang="en"><head>${head}</head><body>${body}${script}</body></html>`;
 }
 
 /** Renders a plain code paste as a highlighted `<pre>` block. */
